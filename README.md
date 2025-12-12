@@ -17,6 +17,7 @@ Minimal FastAPI service that exposes an OpenAI-compatible `/chat/completions` en
 - `INCLUDE_TOOL_LOGS`: when true, tool inputs/outputs are echoed into the answer.
 - `SIMULATE`: when true, skip Anthropic/MCP and return a canned response.
 - `CLIENT_NAME`: identifier sent to MCP servers (defaults to `mcp-agent-base`).
+- `MOCK_EMPTY_MCP`: when true, advertises zero MCP tools without contacting a server.
 
 ## API usage
 - Endpoint: `POST /chat/completions`

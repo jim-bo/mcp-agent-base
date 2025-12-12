@@ -10,7 +10,7 @@ from typing import AsyncIterable, List, Optional, Any, Dict
 from anthropic import AsyncAnthropic
 from anthropic.types import MessageParam, ToolResultBlockParam
 
-from .mcp_client import MCPClient
+from .mcp_client import MCPClient, EmptyMCPClient
 from .settings import (
     MCP_SERVER_URL,
     DEFAULT_MODEL,
@@ -21,6 +21,7 @@ from .settings import (
     THINKING_ENABLED,
     INCLUDE_TOOL_LOGS,
     SIMULATE,
+    MOCK_EMPTY_MCP,
 )
 
 # Simple module logger; defaults to INFO if not configured by the host app.
@@ -47,6 +48,7 @@ class ClaudeMCPAgent:
         thinking_enabled: bool = THINKING_ENABLED,
         thinking_budget_tokens: Optional[int] = DEFAULT_THINKING_BUDGET_TOKENS,
         simulate: bool = SIMULATE,
+        mock_empty_mcp: Optional[bool] = None,
     ):
         self.model = self._normalize_model(model)
         self.max_output_tokens = max_output_tokens
@@ -65,7 +67,14 @@ class ClaudeMCPAgent:
             raise ValueError("ANTHROPIC_API_KEY is required.")
 
         self.client = None if self.simulate else AsyncAnthropic(api_key=self.api_key)
-        self.mcp_client = None if self.simulate else MCPClient(mcp_server_url)
+        mock_empty = MOCK_EMPTY_MCP if mock_empty_mcp is None else mock_empty_mcp
+        if self.simulate:
+            self.mcp_client = None
+        elif mock_empty:
+            logger.info("MOCK_EMPTY_MCP enabled; skipping tool discovery.")
+            self.mcp_client = EmptyMCPClient()
+        else:
+            self.mcp_client = MCPClient(mcp_server_url)
 
     async def ask_stream(
         self,

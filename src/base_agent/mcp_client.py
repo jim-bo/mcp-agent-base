@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .settings import CLIENT_NAME
 
@@ -91,6 +91,19 @@ class MCPClient:
                     text = str(item)
                 rendered.append(text)
             return "\n".join(rendered)
+
+
+class EmptyMCPClient:
+    """Mock MCP client that advertises no tools and does not allow calls."""
+
+    def __init__(self, server_url: str = "mock://empty"):
+        self.server_url = server_url
+
+    async def list_tools(self) -> List[MCPToolDefinition]:
+        return []
+
+    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> str:
+        raise RuntimeError("call_tool should not be invoked when no tools are available")
 
 
 async def discover_tools(server_url: str) -> List[MCPToolDefinition]:

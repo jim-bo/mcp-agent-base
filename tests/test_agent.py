@@ -3,6 +3,7 @@ import json
 import pytest
 
 from base_agent.agent import ClaudeMCPAgent
+from base_agent.mcp_client import EmptyMCPClient
 
 
 class DummyToolDefinition:
@@ -114,7 +115,7 @@ async def test_agent_streams_tool_and_text(monkeypatch):
     final_message = FakeMessage([FakeContentBlock("text", text="final text")])
     second_stream = FakeStream([text_event], final_message)
 
-    agent = ClaudeMCPAgent(api_key="abc123", model="anthropic:claude-test")
+    agent = ClaudeMCPAgent(api_key="abc123", model="anthropic:claude-test", mock_empty_mcp=False)
     agent.client = FakeAnthropic([first_stream, second_stream])
 
     chunks = []
@@ -146,7 +147,7 @@ async def test_agent_ask_collects_tool_logs(monkeypatch):
     final_message = FakeMessage([FakeContentBlock("text", text="complete")])
     second_stream = FakeStream([], final_message)
 
-    agent = ClaudeMCPAgent(api_key="abc123", model="claude-test")
+    agent = ClaudeMCPAgent(api_key="abc123", model="claude-test", mock_empty_mcp=False)
     agent.client = FakeAnthropic([first_stream, second_stream])
 
     answer = await agent.ask([{"role": "user", "content": "hi"}])
@@ -215,3 +216,20 @@ async def test_agent_streams_thinking_separately(monkeypatch):
         isinstance(chunk, dict) and chunk.get("delta", {}).get("content") == "final answer"
         for chunk in chunks
     ), "expected normal content delta"
+
+
+@pytest.mark.asyncio
+async def test_agent_allows_mock_empty_mcp(monkeypatch):
+    # Fake anthropic stream that only returns final text; no tool use.
+    events = [FakeEvent("content_block_delta", delta=FakeDelta("final answer"), index=0)]
+    final_message = FakeMessage([FakeContentBlock("text", text="final answer")])
+    stream = FakeStream(events, final_message)
+
+    agent = ClaudeMCPAgent(api_key="abc123", model="claude-test", mock_empty_mcp=True)
+    agent.client = FakeAnthropic([stream])
+
+    chunks = []
+    async for chunk in agent.ask_stream([{"role": "user", "content": "hi"}]):
+        chunks.append(chunk)
+
+    assert any(isinstance(c, dict) and c.get("delta", {}).get("content") == "final answer" for c in chunks)

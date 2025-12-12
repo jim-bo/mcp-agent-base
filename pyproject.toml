@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "base-agent"
+version = "0.1.0"
+description = "Minimal MCP-aware OpenAI-compatible chat gateway backed by Anthropic."
+authors = [{ name = "CBIO Agent Maintainers" }]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.110.0",
+  "uvicorn[standard]>=0.23.0",
+  "anthropic>=0.34.0",
+  "httpx>=0.25.0",
+  "pydantic>=2.0,<3",
+  "pydantic-settings>=2.2.1",
+  "mcp>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "pytest-asyncio>=0.23.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+python_files = ["test_*.py"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  mcp-agent-base:
+    build: .
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      MCP_SERVER_URL: ${MCP_SERVER_URL:-http://host.docker.internal:8002/mcp}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-anthropic:claude-sonnet-4-20250514}
+      DEFAULT_TEMPERATURE: ${DEFAULT_TEMPERATURE:-0.0}
+      DEFAULT_MAX_OUTPUT_TOKENS: ${DEFAULT_MAX_OUTPUT_TOKENS:-1024}
+      THINKING_ENABLED: ${THINKING_ENABLED:-false}
+      THINKING_BUDGET_TOKENS: ${THINKING_BUDGET_TOKENS:-1024}
+      INCLUDE_TOOL_LOGS: ${INCLUDE_TOOL_LOGS:-true}
+      CLIENT_NAME: ${CLIENT_NAME:-mcp-agent-base}
+      SIMULATE: ${SIMULATE:-false}
+    volumes:
+      # Allow editing prompts without rebuilding.
+      - ./prompts:/app/prompts:ro
+    command: uvicorn base_agent.api:app --host 0.0.0.0 --port 5000
